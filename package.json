@@ -2,6 +2,9 @@
   "name": "tinylink",
   "version": "1.0.0",
   "description": "TinyLink - simple URL shortener for take-home assignment",
+  "engines": {
+    "node": "18.x"
+  },
   "main": "server.js",
   "scripts": {
   "start": "node scripts/migrate.js && node server.js",
