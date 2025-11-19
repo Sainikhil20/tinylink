@@ -30,9 +30,24 @@ async function ensureSchema() {
       last_clicked TIMESTAMP
     );
     `;
-    await pgPool.query(sql);
-  } else {
-    sqliteDb.exec(`
+    try {
+      await pgPool.query(sql);
+      return;
+    } catch (err) {
+      // If Postgres is unreachable or misconfigured, fall back to SQLite
+      console.error('Failed to ensure Postgres schema, falling back to SQLite. Error:', err && err.message);
+      usingPg = false;
+      // initialize sqlite DB if not already
+      if (!sqliteDb) {
+        const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data.sqlite');
+        sqliteDb = new Database(DB_PATH);
+      }
+      // continue to ensure sqlite schema below
+    }
+  }
+
+  // SQLite path (either because DATABASE_URL was not set or we fell back)
+  sqliteDb.exec(`
     CREATE TABLE IF NOT EXISTS links (
       code TEXT PRIMARY KEY,
       url TEXT NOT NULL,
@@ -41,7 +56,6 @@ async function ensureSchema() {
       last_clicked DATETIME
     );
     `);
-  }
 }
 
 async function getAllLinks() {
